@@ -1,0 +1,17 @@
+[Unit]
+Description=BGE-M3 Embedding Server
+After=network.target
+
+[Service]
+Type=simple
+User=sh-isakov
+WorkingDirectory=/home/sh-isakov/embedding
+Environment=PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+Environment=MAX_MEMORY_FRACTION=0.15
+Environment=PORT=8060
+Environment=CUDA_VISIBLE_DEVICES=0
+ExecStart=/home/sh-isakov/embedding/venv/bin/python server.py --host 0.0.0.0
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

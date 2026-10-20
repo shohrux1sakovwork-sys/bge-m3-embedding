@@ -1,0 +1,33 @@
+services:
+  bge-m3:
+    container_name: bge-m3
+    build:
+      context: .
+      network: host
+    network_mode: host
+    volumes:
+      # Reuse the host HuggingFace cache so the model is shared across
+      # this container, the TTS container, and any bare-metal runs.
+      - /home/sh-isakov/.cache/huggingface:/root/.cache/huggingface
+    environment:
+      - API_KEY=${API_KEY:-}
+      - PORT=${PORT:-8060}
+      - MAX_MEMORY_FRACTION=${MAX_MEMORY_FRACTION:-0.15}
+      - BATCH_SIZE=${BATCH_SIZE:-32}
+      - MAX_BATCH_SIZE=${MAX_BATCH_SIZE:-128}
+      - MAX_LENGTH=${MAX_LENGTH:-1024}
+      - PIPELINE_DEPTH=${PIPELINE_DEPTH:-4}
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              # Pin to GPU 0. Change to ["1"] or use CUDA_VISIBLE_DEVICES
+              # below to switch GPUs on multi-GPU hosts.
+              device_ids: ["0"]
+              capabilities: [gpu]
+    # Name the process so it shows up as "bge-m3" (or whatever PROC_NAME is set to)
+    # in nvidia-smi instead of a generic "python".
+    command: ["bash", "-c", "exec -a ${PROC_NAME:-bge-m3} python server.py --host 0.0.0.0"]
+    ipc: host
+    restart: unless-stopped
